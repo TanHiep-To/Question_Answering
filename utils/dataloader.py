@@ -1,6 +1,8 @@
 import pandas as pd
 from tqdm import tqdm
 import dataset as Dataset
+import settings as preprocessing
+
 configs = {
     
     'zalo' : '../data/zac2022_train_merged_final.json',
@@ -10,7 +12,7 @@ configs = {
 
 
 
-def main():
+def merge_dataset():
     
     """ 
     Loading and Processing Zalo2022 Dataset
@@ -70,9 +72,12 @@ def main():
     qa_dataset = pd.concat([zalo, xsquad, bert_qa], axis=0, ignore_index=True)
     qa_dataset.to_json('../data/qa_dataset.json')
 
+def main():
+    
+    merge_dataset()
+    train_df = pd.read_json('../data/qa_dataset.json')
+    train_df = preprocessing.add_end_pos(train_df)
+    train_df.to_json('../data/qa_dataset.json')
     
 if __name__ == '__main__':
-    #main()
-    
-    df = pd.read_json('../data/qa_dataset.json')
-    print(df.head())
+    main()
