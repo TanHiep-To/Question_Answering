@@ -50,7 +50,6 @@ def merge_dataset():
         dfs.append(final_p_df)
         
     xsquad = pd.concat(dfs, axis=0, ignore_index=True)
-  
     
     df_bert = pd.read_json(configs['bert_url'])
     paras = Dataset.get_paragraph(df_xsquad)
