@@ -24,3 +24,6 @@ python-dotenv
 google
 lxml
 sklearn
+underthesea
+synonyms
+sentence_transformers
