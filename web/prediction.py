@@ -14,12 +14,15 @@ def run_prediction(model, tokenizer, context, question):
         return_tensors='pt'
     ).to('cpu')
     
+
     with torch.no_grad():
         outputs = model(**inputs)
     
     answer_start = torch.argmax(outputs[0])  
     answer_end = torch.argmax(outputs[1]) + 1 
 
+    print(f'Answer: {tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs.input_ids[0][answer_start:answer_end]))}')
+    
     answer = tokenizer.convert_tokens_to_string(
         tokenizer.convert_ids_to_tokens(
             inputs.input_ids[0][answer_start:answer_end]

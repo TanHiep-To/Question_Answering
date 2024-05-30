@@ -16,6 +16,7 @@ import time
 from wrapt_timeout_decorator import *
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer, util
 
 load_dotenv()
 
@@ -25,23 +26,21 @@ api_keys = [
 ]
 
 SearchEngineID = os.getenv("ENGINE_ID")
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 def find_most_similar_documents(question,documents):
-    vectorizer = TfidfVectorizer().fit(documents)
-    document_vectors = vectorizer.transform(documents)
-    question_vector = vectorizer.transform([question])
     
-    max_similarity = 0
-    most_similar_documents = None
+    print(documents)
+    document_embeddings = model.encode(documents)
+    question_embedding = model.encode([question])[0]
 
-    for i in range(len(documents)):
-        similarity = cosine_similarity(document_vectors[i],question_vector)
+    # Compute the cosine similarity between the question and each document
+    similarities = util.pytorch_cos_sim(question_embedding, document_embeddings)
 
-        if similarity > max_similarity:
-            max_similarity = similarity
-            most_similar_documents = (documents[i], question)
-
-    return most_similar_documents
+    # Find the most similar document
+    most_similar_document_index = similarities.argmax()
+    most_similar_document = documents[most_similar_document_index]
+    return most_similar_document
 
 def getContent(url):
     try:
@@ -61,6 +60,7 @@ def getContent(url):
         text = re.sub(r'\[\d+\]', '', text)
         text = text.replace('\n', '') 
 
+        print(url,text)
         return text
     except:
         return ""
@@ -70,10 +70,20 @@ class GoogleSearch():
         most_similar_documents = None
     
     def gg_search(self, query):
-        pages_content = search("lang_vi " + query, num=10, stop=10, pause=2)
+        pages_content = search("lang_vi " + query, num=5, stop=5, pause=2)
         document_urls = list(set(pages_content))
 
         with Pool(4) as p:
             ggsearch_results = p.map(getContent, document_urls)
 
         return document_urls, ggsearch_results
+
+def main():
+    question = "Quốc kỳ Việt Nam có mấy màu?"
+    ggsearch = GoogleSearch()
+    document_urls, ggsearch_results = ggsearch.gg_search(question)
+    most_similar_document = find_most_similar_documents(question, ggsearch_results)
+    print(most_similar_document)
+
+if __name__ == "__main__":
+    main()
