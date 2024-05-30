@@ -19,3 +19,8 @@ gradio
 tf-keras
 torch
 torchvision
+google-api-python-client
+python-dotenv
+google
+lxml
+sklearn
