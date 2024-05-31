@@ -27,3 +27,4 @@ sklearn
 underthesea
 synonyms
 sentence_transformers
+datasets

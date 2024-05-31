@@ -7,7 +7,8 @@ configs = {
     
     'zalo' : '../data/zac2022_train_merged_final.json',
     'xsquad': '../data/dev_xsquad.json',
-    'bert_url':'https://raw.githubusercontent.com/mailong25/bert-vietnamese-question-answering/master/dataset/train-v2.0.json'
+    'bert_url':'https://raw.githubusercontent.com/mailong25/bert-vietnamese-question-answering/master/dataset/train-v2.0.json',
+    'custom': '../data/custom.json'
 }
 
 
@@ -24,6 +25,8 @@ def merge_dataset():
     answers = Dataset.has_answer(train_df).data.apply(Dataset.get_answer).reset_index(drop=True)
     answer_starts = Dataset.has_answer(train_df).data.apply(Dataset.get_answer_position).reset_index(drop=True)
     
+    cus_df = pd.read_csv('../data/custom.csv')
+
     
     zalo = pd.DataFrame(
         {
@@ -34,10 +37,26 @@ def merge_dataset():
         }
     )
     
+
+    
+    question = cus_df['question']
+    context = cus_df['context']
+    answer = cus_df['answer']
+    answer_start = cus_df['answer_start']
+    
+    cus = pd.DataFrame(
+        {
+            'question': question,
+            'context': context,
+            'answer': answer,
+            'answer_start': answer_start
+        }
+    )
+    
+    
     
     df_xsquad = pd.read_json(configs['xsquad'])
     df_xsquad.drop('version',axis = 1,inplace = True)    
-    
     paragraphs = Dataset.get_paragraph(df_xsquad)
     dfs = []
     for p in paragraphs:
@@ -68,7 +87,7 @@ def merge_dataset():
         
     bert_qa = pd.concat(dfs, axis=0, ignore_index=True)
     
-    qa_dataset = pd.concat([zalo, xsquad, bert_qa], axis=0, ignore_index=True)
+    qa_dataset = pd.concat([zalo,cus, xsquad, bert_qa], axis=0, ignore_index=True)
     qa_dataset.to_json('../data/qa_dataset.json')
 
 def main():
