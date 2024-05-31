@@ -18,6 +18,7 @@ def run_prediction(model, tokenizer, context, question):
     with torch.no_grad():
         outputs = model(**inputs)
     
+    print(outputs)
     answer_start = torch.argmax(outputs[0])  
     answer_end = torch.argmax(outputs[1]) + 1 
 
