@@ -16,17 +16,17 @@ import prediction
 
 # Initialize
 
-# # Tải tokenizer và model
-# if "model" not in st.session_state.keys():
-#     st.session_state.model = model.load_model('../model/qa_large_model/')
-# if "tokenizer" not in st.session_state.keys():
-#     st.session_state.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
-#     
-# # tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
-# # model = model.load_model('../model/qa_large_model/')
-# 
-# # Load question-answer pipeline
-# qa_pipeline = pipeline('question-answering', model=st.session_state.model, tokenizer=st.session_state.tokenizer)
+# Tải tokenizer và model
+if "model" not in st.session_state.keys():
+    st.session_state.model = model.load_model('../model/qa_large_model/')
+if "tokenizer" not in st.session_state.keys():
+    st.session_state.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
+    
+# tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
+# model = model.load_model('../model/qa_large_model/')
+
+# Load question-answer pipeline
+qa_pipeline = pipeline('question-answering', model=st.session_state.model, tokenizer=st.session_state.tokenizer)
 
 if "question" not in st.session_state.keys():
     st.session_state.question = ""
@@ -131,16 +131,13 @@ with col2:
 #        # Use the file here
 #        pass
 
-  
 # Centered button
 st.markdown('<div class="center-button">', unsafe_allow_html=True)
-if st.button('Submit'):
-    # result = qa_pipeline({'question': question, 'context': context})
+if st.button('Submit'): 
     st.session_state.question = question
     st.session_state.checkbox = checkBox
-    result = {'answer': 'This is the answer'}
+    result = qa_pipeline({'question': question, 'context': context})
     st.text_area("Answer", value=result['answer'], height=80)
-    
 st.markdown('</div>', unsafe_allow_html=True)
 
 
