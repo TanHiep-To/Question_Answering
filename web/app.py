@@ -14,8 +14,26 @@ from transformers import AutoTokenizer
 import model
 import prediction
 
-# Tải tokenizer
-tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
+# Initialize
+
+# Tải tokenizer và model
+if "model" not in st.session_state.keys():
+    st.session_state.model = model.load_model('../model/qa_large_model/')
+if "tokenizer" not in st.session_state.keys():
+    st.session_state.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
+    
+# tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
+# model = model.load_model('../model/qa_large_model/')
+
+# Load question-answer pipeline
+qa_pipeline = pipeline('question-answering', model=st.session_state.model, tokenizer=st.session_state.tokenizer)
+
+if "question" not in st.session_state.keys():
+    st.session_state.question = ""
+if "context" not in st.session_state.keys():
+    st.session_state.context = ""
+if "checkbox" not in st.session_state.keys():
+    st.session_state.checkbox = True
 
 st.markdown(
     """
@@ -61,6 +79,9 @@ st.markdown(
         border-radius: 8px;
         width: 100%;
     }
+    .stCheckbox{
+        margin-top: -30px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -82,28 +103,44 @@ with col2.container():
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Đặt hai cột với tỉ lệ phù hợp
-col1, col2 = st.columns([2, 2])
+col1, col2 = st.columns([3, 5])
 
 # Hiển thị phần "Question and Answer" trong cột đầu tiên với CSS lớp "section"
 with col1:
-    st.markdown('<div class="section"><h3>Question and Answer</h3></div>', unsafe_allow_html=True)
-    question = st.text_area("Question", value="Type your question here...", height=80)
-    answer = st.text_area("Answer", value="The answer will appear here", height=80)
-    # Centered button
-    st.markdown('<div class="center-button">', unsafe_allow_html=True)
-    if st.button('Submit'):
-        st.write("Button clicked!")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
+    st.markdown('<div class="section"><h3>Question</h3></div>', unsafe_allow_html=True)
+    st.text("")
+    question = st.text_area("Question", value=st.session_state.question, placeholder="Type your question here...", height=200)
+  
 # Hiển thị phần "Context" trong cột thứ hai với CSS lớp "section"
 with col2:
     st.markdown('<div class="section"><h3>Context</h3></div>', unsafe_allow_html=True)
-    context = st.text_area("", value="Type your context here...", height=230)
-    uploaded_file = st.file_uploader("**Choose a file**")
-    if uploaded_file is not None:
-        # Use the file here
-        pass
+    checkBox = st.checkbox(label="Give Context", value=st.session_state.checkbox, help="Please do not enter any text in this box if you do not have a context. We will automatically search to find a suitable context for you.", label_visibility="visible")
+
+    if checkBox:
+        context = st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200)
+        st.session_state.context = context
+        st.session_state.question = question
+    else:
+        st.session_state.context = ""
+        st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200, disabled=True)
+        st.session_state.question = question
+
+
+#    uploaded_file = st.file_uploader("**Choose a file**")
+#    if uploaded_file is not None:
+#        # Use the file here
+#        pass
+
+# Centered button
+st.markdown('<div class="center-button">', unsafe_allow_html=True)
+if st.button('Submit'): 
+    st.session_state.question = question
+    st.session_state.checkbox = checkBox
+    result = qa_pipeline({'question': question, 'context': context})
+    st.text_area("Answer", value=result['answer'], height=80)
+st.markdown('</div>', unsafe_allow_html=True)
+
+
     
 # with st.spinner('Loading model... Please wait a minute.'):
 #     model = model.load_model('../models/qa_large_model/')
