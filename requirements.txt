@@ -23,8 +23,10 @@ google-api-python-client
 python-dotenv
 google
 lxml
-sklearn
+scikit-learn
 underthesea
 synonyms
 sentence_transformers
 datasets
+nltk
+aiohttp
