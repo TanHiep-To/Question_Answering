@@ -28,3 +28,5 @@ underthesea
 synonyms
 sentence_transformers
 datasets
+nltk
+aiohttp

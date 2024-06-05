@@ -4,7 +4,6 @@ import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from types import SimpleNamespace
-from tensorflow.keras.models import load_model
 import wikipedia 
 import openai
 import gradio as gr
@@ -13,20 +12,23 @@ from transformers import pipeline
 from transformers import AutoTokenizer
 import model
 import prediction
+import ggsearch
 
-# Initialize
-
+google_search = ggsearch.GoogleSearch()
 # Tải tokenizer và model
 if "model" not in st.session_state.keys():
-    st.session_state.model = model.load_model('../model/qa_large_model/')
+    st.session_state.model = model.load_model('../model/model/')
 if "tokenizer" not in st.session_state.keys():
     st.session_state.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
     
-# tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
-# model = model.load_model('../model/qa_large_model/')
+if "google_search" not in st.session_state.keys():
+    st.session_state.google_search = ggsearch.GoogleSearch()
 
 # Load question-answer pipeline
-qa_pipeline = pipeline('question-answering', model=st.session_state.model, tokenizer=st.session_state.tokenizer)
+qa_pipeline = pipeline('question-answering', 
+                    model=st.session_state.model,
+                    tokenizer=st.session_state.tokenizer,
+                    google_search=st.session_state.google_search)
 
 if "question" not in st.session_state.keys():
     st.session_state.question = ""
@@ -110,7 +112,8 @@ with col1:
     st.markdown('<div class="section"><h3>Question</h3></div>', unsafe_allow_html=True)
     st.text("")
     question = st.text_area("Question", value=st.session_state.question, placeholder="Type your question here...", height=200)
-  
+
+
 # Hiển thị phần "Context" trong cột thứ hai với CSS lớp "section"
 with col2:
     st.markdown('<div class="section"><h3>Context</h3></div>', unsafe_allow_html=True)
@@ -125,12 +128,22 @@ with col2:
         st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200, disabled=True)
         st.session_state.question = question
 
+document = ""
+paragraph = ""
 
-#    uploaded_file = st.file_uploader("**Choose a file**")
-#    if uploaded_file is not None:
-#        # Use the file here
-#        pass
 
+if(question and context == ""):
+    st.spinner("Searching for context...")
+    document, paragraph = ggsearch.search_document(google_search,question)
+    st.session_state.context = document
+    st.session_state.question = question
+    st.session_state.checkbox = True
+    context = document
+    
+    print(question)
+    print(context)
+    
+    
 # Centered button
 st.markdown('<div class="center-button">', unsafe_allow_html=True)
 if st.button('Submit'): 
@@ -140,30 +153,3 @@ if st.button('Submit'):
     st.text_area("Answer", value=result['answer'], height=80)
 st.markdown('</div>', unsafe_allow_html=True)
 
-
-    
-# with st.spinner('Loading model... Please wait a minute.'):
-#     model = model.load_model('../models/qa_large_model/')
-
-# question = st.text_input("Enter question here.  .....")
-# context = ""
-# add_context = st.checkbox('Add context')
-# if add_context:
-#     context = st.text_area("Enter context here......")
-# else:
-#     keywords = wikipedia.search([question])
-    
-#     for keyword in keywords:
-#         try:
-#             context += wikipedia.summary(keyword, sentences=10)
-#             break
-#         except:
-#             pass
-
-# print(context)
-
-# if st.button('Submit'):
-#     with torch.inference_mode():
-#         question, answer = prediction.run_prediction(model, tokenizer, context, question)
-#         st.write(f'Question: {question}')
-#         st.write(f'Answer: {answer}')
