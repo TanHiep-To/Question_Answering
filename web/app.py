@@ -4,31 +4,36 @@ import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from types import SimpleNamespace
-import wikipedia 
 import openai
 import gradio as gr
 import torch
-from transformers import pipeline
-from transformers import AutoTokenizer
 import model
 import prediction
-import ggsearch
+import ggsearch as gg
+from transformers import pipeline, AutoTokenizer
 
-google_search = ggsearch.GoogleSearch()
+
+# question = st.text_input("Enter your question:",key="question")
+# if st.button("Search"):
+#     results = gg.get_google_results(question)
+#     documents = [result['snippet'] for result in results]
+#     most_similar_document = gg.find_most_similar_documents(question, documents)
+#     st.write(most_similar_document)
+#     st.write("The best paragraph:")
+#     best_paragraph = gg.the_best_paragraph(question, most_similar_document)
+#     st.write(best_paragraph)
+
 # Tải tokenizer và model
 if "model" not in st.session_state.keys():
     st.session_state.model = model.load_model('../model/model/')
 if "tokenizer" not in st.session_state.keys():
     st.session_state.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-large')
     
-if "google_search" not in st.session_state.keys():
-    st.session_state.google_search = ggsearch.GoogleSearch()
 
 # Load question-answer pipeline
 qa_pipeline = pipeline('question-answering', 
                     model=st.session_state.model,
-                    tokenizer=st.session_state.tokenizer,
-                    google_search=st.session_state.google_search)
+                    tokenizer=st.session_state.tokenizer)
 
 if "question" not in st.session_state.keys():
     st.session_state.question = ""
@@ -125,31 +130,36 @@ with col2:
         st.session_state.question = question
     else:
         st.session_state.context = ""
-        st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200, disabled=True)
+        st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200, disabled=True,key="context_user")
         st.session_state.question = question
 
-document = ""
-paragraph = ""
-
-
-if(question and context == ""):
-    st.spinner("Searching for context...")
-    document, paragraph = ggsearch.search_document(google_search,question)
-    st.session_state.context = document
-    st.session_state.question = question
-    st.session_state.checkbox = True
-    context = document
-    
-    print(question)
-    print(context)
-    
-    
-# Centered button
 st.markdown('<div class="center-button">', unsafe_allow_html=True)
+
 if st.button('Submit'): 
+    document = ""
+    paragraph = ""
+    
     st.session_state.question = question
     st.session_state.checkbox = checkBox
-    result = qa_pipeline({'question': question, 'context': context})
+    st.session_state.context = context
+    
+    if context == "":
+        results = gg.get_google_results(question)
+        documents = [result['snippet'] for result in results]
+        most_similar_document = gg.find_most_similar_documents(question, documents)
+        document = most_similar_document
+        paragraph = gg.the_best_paragraph(question, most_similar_document)
+        context = document
+    else:
+        document = context
+        paragraph = context
+
+    st.session_state.context = context
+    if checkBox:
+        context_user = context
+    
+    result = qa_pipeline({'question': question, 'context': document})
     st.text_area("Answer", value=result['answer'], height=80)
 st.markdown('</div>', unsafe_allow_html=True)
 
+    

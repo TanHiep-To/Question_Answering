@@ -17,9 +17,15 @@ import time
 from wrapt_timeout_decorator import *
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import streamlit as st
 from sentence_transformers import SentenceTransformer, util
 import nltk
-nltk.download('punkt')
+import asyncio
+import time
+import aiohttp
+from aiohttp.client import ClientSession
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 load_dotenv()
@@ -29,8 +35,10 @@ api_keys = [
     os.getenv("API_KEY2")
 ]
 
+
 SearchEngineID = os.getenv("ENGINE_ID")
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
 
 def find_most_similar_documents(question,documents):
     
@@ -57,58 +65,32 @@ def the_best_paragraph(question, document):
     most_similar_paragraph = paragraphs[most_similar_paragraph_index]
     return most_similar_paragraph
 
-def getContent(url):
+service = build("customsearch", "v1", developerKey=api_keys[0])
+
+def get_google_results(query, num_results=10):
+    results = []
+    for i in range(0, num_results, 10):
+        res = service.cse().list(q=query, cx=SearchEngineID, start=i+1).execute()
+        results += res['items']
+    return results
+
+def get_content(url):
     try:
-        html = requests.get(url)
-        soup = BeautifulSoup(html.text, 'lxml')
-
-
-        for invisible_elem in soup.find_all(['script', 'style']):
-            invisible_elem.extract()
-
-        paragraphs = [p.get_text() for p in soup.find_all('p')]
-
-
-        text = ' '.join(paragraph.strip() for paragraph in paragraphs)
-
-        text = text.replace('\xa0', ' ')
-        text = re.sub(r'\[\d+\]', '', text)
-        text = text.replace('\n', '') 
-        return text
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup.get_text()
     except:
         return ""
-class GoogleSearch():
-    
-    def __init__(self):
-        most_similar_documents = None
-    
-    def gg_search(self, query):
-        pages_content = search("lang_vi " + query, num=5, stop=5, pause=2)  # Decrease pause time
-        document_urls = list(set(pages_content))
-
-        with Pool(cpu_count()) as p:  # Use all available cores
-            ggsearch_results = p.map(getContent, document_urls)
-
-        return document_urls, ggsearch_results
-
-def search_document(ggsearch,question):
-    
-    if(ggsearch == None):
-        ggsearch = GoogleSearch()
-    
-    document_urls, ggsearch_results = ggsearch.gg_search(question)
-    most_similar_document = find_most_similar_documents(question, ggsearch_results)
-    most_similar_paragraph = the_best_paragraph(question, most_similar_document)
-    return most_similar_document,most_similar_paragraph
 
 
-def main():
-    question = "Quốc kỳ Việt Nam có bao nhiêu màu?"
-    ggsearch = None
-    
-    most_similar_document, most_similar_paragraph = search_document(ggsearch, question)
+# question = st.text_input("Enter your question:")
+# if st.button("Search"):
+#     results = get_google_results(question)
+#     documents = [result['snippet'] for result in results]
+#     most_similar_document = find_most_similar_documents(question, documents)
+#     st.write(most_similar_document)
+#     st.write("The best paragraph:")
+#     best_paragraph = the_best_paragraph(question, most_similar_document)
+#     st.write(best_paragraph)
 
-    print("Most similar document: ", most_similar_document)
-    print("Most similar paragraph: ", most_similar_paragraph)
-if __name__ == "__main__":
-    main()
+# # Path: web/app.py

@@ -8,7 +8,7 @@ import streamlit as st
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-@st.cache_data
+@st.cache_resource
 def load_model(model_path):
     model = AutoModelForQuestionAnswering.from_pretrained(model_path)
     model.eval()
