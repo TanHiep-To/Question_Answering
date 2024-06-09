@@ -51,19 +51,27 @@ def find_most_similar_documents(question,documents):
 
     # Find the most similar document
     most_similar_document_index = similarities.argmax()
-    most_similar_document = documents[most_similar_document_index]
+    most_similar_document = documents[0]
     return most_similar_document
 
 def the_best_paragraph(question, document):
-    paragraphs = sent_tokenize(document)
-    paragraph_embeddings = model.encode(paragraphs)
-    question_embedding = model.encode([question])[0]
-
-    similarities = util.pytorch_cos_sim(question_embedding, paragraph_embeddings)
-
-    most_similar_paragraph_index = similarities.argmax()
-    most_similar_paragraph = paragraphs[most_similar_paragraph_index]
-    return most_similar_paragraph
+    
+    paragraphs = document.split('\n')
+    best_paragraph = ""
+    best_paragraph_score = 0
+    for paragraph in paragraphs:
+        if len(paragraph) < 10:
+            continue
+        sentences = sent_tokenize(paragraph)
+        sentence_embeddings = model.encode(sentences)
+        question_embedding = model.encode([question])[0]
+        similarities = util.pytorch_cos_sim(question_embedding, sentence_embeddings)
+        max_similarity = similarities.max()
+        if max_similarity > best_paragraph_score:
+            best_paragraph_score = max_similarity
+            best_paragraph = paragraph
+    return best_paragraph
+    
 
 service = build("customsearch", "v1", developerKey=api_keys[0])
 
@@ -82,15 +90,12 @@ def get_content(url):
     except:
         return ""
 
-
-# question = st.text_input("Enter your question:")
-# if st.button("Search"):
-#     results = get_google_results(question)
-#     documents = [result['snippet'] for result in results]
-#     most_similar_document = find_most_similar_documents(question, documents)
-#     st.write(most_similar_document)
-#     st.write("The best paragraph:")
-#     best_paragraph = the_best_paragraph(question, most_similar_document)
-#     st.write(best_paragraph)
-
-# # Path: web/app.py
+def main():
+    question = "Thủ đô nước Mỹ tên gì?"
+    documents = get_google_results(question)
+    documents = [doc['snippet'] for doc in documents]
+    most_similar_document = find_most_similar_documents(question,documents)
+    best_paragraph = the_best_paragraph(question, most_similar_document)
+    
+if '__main__' == __name__:
+    main()
