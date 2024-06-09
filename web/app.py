@@ -26,6 +26,15 @@ def modify_answer(answer):
 
     return answer
 
+def modify_context(context):
+    # Xóa định dạng ngày tháng tiếng Anh (ví dụ: Apr 19, 2023 ...)
+    context = re.sub(r'^[A-Za-z]{3,9} \d{1,2}, \d{4} \.\.\. ', '', context)
+    
+    # Xóa định dạng ngày tháng tiếng Việt (ví dụ: 1 thg 6, 2021 ...)
+    context = re.sub(r'^\d{1,2} thg \d{1,2}, \d{4} \.\.\. ', '', context)
+    
+    return context
+
 # Tải tokenizer và model
 if "model" not in st.session_state.keys():
     st.session_state.model = model.load_model('../model/model/')
@@ -157,20 +166,17 @@ if st.button('Submit'):
         document = most_similar_document
         paragraph = gg.the_best_paragraph(question, most_similar_document)
         context = document
-    else:
-        document = context
-        paragraph = context
 
-    st.session_state.context = context
-    if checkBox:
-        context_user = context
-    
-    result = qa_pipeline({'question': question, 'context': document})
-    answer = result['answer']
-    # Normalize the answer
-    answer = modify_answer(answer)
-    
-    st.text_area("Answer", value=answer, height=80)
+        result = qa_pipeline({'question': question, 'context': document})
+        answer = result['answer']
+        # Normalize the answer
+        answer = modify_answer(answer)
+        st.session_state.question = question
+        st.session_state.context = context
+        paragraph = modify_context(paragraph)
+        st.text_area("Founded Context:", value=paragraph, height=150)
+        st.text_area("Answer", value=answer, height=80)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
     
