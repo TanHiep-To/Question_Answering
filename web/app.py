@@ -18,7 +18,7 @@ def modify_answer(answer):
     answer = re.sub(r'[^\w\s]', '', answer)
 
     # Capitalize the first letter
-    answer = answer.capitalize()
+    # answer = answer.capitalize()
 
     # Ensure the answer ends with a period
     if not answer.endswith('.'):

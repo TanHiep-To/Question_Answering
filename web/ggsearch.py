@@ -75,7 +75,7 @@ def the_best_paragraph(question, document):
 
 service = build("customsearch", "v1", developerKey=api_keys[0])
 
-def get_google_results(query, num_results=10):
+def get_google_results(query, num_results=20):
     results = []
     for i in range(0, num_results, 10):
         res = service.cse().list(q=query, cx=SearchEngineID, start=i+1).execute()
