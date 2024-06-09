@@ -91,7 +91,7 @@ def get_content(url):
         return ""
 
 def main():
-    question = "Thủ đô nước Mỹ tên gì?"
+    question = "Thủ đô nước Pháp tên là gì?"
     documents = get_google_results(question)
     documents = [doc['snippet'] for doc in documents]
     most_similar_document = find_most_similar_documents(question,documents)
