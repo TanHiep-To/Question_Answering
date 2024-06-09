@@ -158,7 +158,7 @@ if st.button('Submit'):
         result = qa_pipeline({'question': question, 'context': context}) 
         st.session_state.question = question
         st.session_state.context = context
-        st.text_area("Founded Context:", value=context, height=150)
+        st.text_area("Founded Context:", value=paragraph, height=150)
         st.text_area("Answer", value=result['answer'], height=80)
 
 
