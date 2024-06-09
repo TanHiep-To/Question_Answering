@@ -11,17 +11,20 @@ import model
 import prediction
 import ggsearch as gg
 from transformers import pipeline, AutoTokenizer
+import re
 
-# test
-# question = st.text_input("Enter your question:",key="question")
-# if st.button("Search"):
-#     results = gg.get_google_results(question)
-#     documents = [result['snippet'] for result in results]
-#     most_similar_document = gg.find_most_similar_documents(question, documents)
-#     st.write(most_similar_document)
-#     st.write("The best paragraph:")
-#     best_paragraph = gg.the_best_paragraph(question, most_similar_document)
-#     st.write(best_paragraph)
+def modify_answer(answer):
+    # Remove any special characters from the answer
+    answer = re.sub(r'[^\w\s]', '', answer)
+
+    # Capitalize the first letter
+    answer = answer.capitalize()
+
+    # Ensure the answer ends with a period
+    if not answer.endswith('.'):
+        answer += '.'
+
+    return answer
 
 # Tải tokenizer và model
 if "model" not in st.session_state.keys():
@@ -154,14 +157,20 @@ if st.button('Submit'):
         document = most_similar_document
         paragraph = gg.the_best_paragraph(question, most_similar_document)
         context = document
-        
-        result = qa_pipeline({'question': question, 'context': context}) 
-        st.session_state.question = question
-        st.session_state.context = context
-        st.text_area("Founded Context:", value=paragraph, height=150)
-        st.text_area("Answer", value=result['answer'], height=80)
+    else:
+        document = context
+        paragraph = context
 
-
+    st.session_state.context = context
+    if checkBox:
+        context_user = context
+    
+    result = qa_pipeline({'question': question, 'context': document})
+    answer = result['answer']
+    # Normalize the answer
+    answer = modify_answer(answer)
+    
+    st.text_area("Answer", value=answer, height=80)
 st.markdown('</div>', unsafe_allow_html=True)
 
     
