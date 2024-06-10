@@ -3,3 +3,5 @@ myenv/*
 __pycache__/
 model/
 .env
+.venv/*
+myenv/*
