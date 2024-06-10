@@ -4,4 +4,3 @@ __pycache__/
 model/
 .env
 .venv/*
-myenv/*
