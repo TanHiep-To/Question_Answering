@@ -44,10 +44,11 @@ streamlit run app.py
 - [x] Merge data
 - [x] EDA
 - [x] Report Introduction on Overleaf
-- [ ] Design UI/UX
+- [X] Design UI/UX
 - [X] Fine-tuning model
-- [ ] Choose metrics for model (F1,accuracy, pecission, recall)
+- [X] Testing
+- [X] Choose metrics for model (F1,accuracy, pecission, recall)
 - [X] Find model to help search context.      
-- [ ] Deploy model
-
+- [X] Deploy model
+- [X] Testing
 
