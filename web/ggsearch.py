@@ -51,7 +51,7 @@ def find_most_similar_documents(question,documents):
 
     # Find the most similar document
     most_similar_document_index = similarities.argmax()
-    most_similar_document = documents[0]
+    most_similar_document = documents[0] + documents[1] + documents[most_similar_document_index]
     return most_similar_document
 
 def the_best_paragraph(question, document):
