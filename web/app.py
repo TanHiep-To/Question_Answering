@@ -18,13 +18,22 @@ def modify_answer(answer):
     answer = re.sub(r'[^\w\s]', '', answer)
 
     # Capitalize the first letter
-    answer = answer.capitalize()
+    # answer = answer.capitalize()
 
     # Ensure the answer ends with a period
     if not answer.endswith('.'):
         answer += '.'
 
     return answer
+
+def modify_context(context):
+    # Xóa định dạng ngày tháng tiếng Anh (ví dụ: Apr 19, 2023 ...)
+    context = re.sub(r'^[A-Za-z]{3,9} \d{1,2}, \d{4} \.\.\. ', '', context)
+    
+    # Xóa định dạng ngày tháng tiếng Việt (ví dụ: 1 thg 6, 2021 ...)
+    context = re.sub(r'^\d{1,2} thg \d{1,2}, \d{4} \.\.\. ', '', context)
+    
+    return context
 
 # Tải tokenizer và model
 if "model" not in st.session_state.keys():
@@ -43,7 +52,9 @@ if "question" not in st.session_state.keys():
 if "context" not in st.session_state.keys():
     st.session_state.context = ""
 if "checkbox" not in st.session_state.keys():
-    st.session_state.checkbox = True
+    st.session_state.checkbox = False
+if "answer" not in st.session_state.keys():
+    st.session_state.answer = ""
 
 st.markdown(
     """
@@ -113,60 +124,59 @@ with col2.container():
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Đặt hai cột với tỉ lệ phù hợp
-col1, col2 = st.columns([3, 5])
+# col1, col2 = st.columns([3, 5])
 
-# Hiển thị phần "Question and Answer" trong cột đầu tiên với CSS lớp "section"
-with col1:
-    st.markdown('<div class="section"><h3>Question</h3></div>', unsafe_allow_html=True)
-    st.text("")
-    question = st.text_area("Question", value=st.session_state.question, placeholder="Type your question here...", height=200)
+# Hiển thị phần "Question and Answer" với CSS lớp "section"
+# with col1:
+st.markdown('<div class="section"><h3>Question</h3></div>', unsafe_allow_html=True)
+st.text("")
+question = st.text_area("Question", value=st.session_state.question, placeholder="Type your question here...", height=50)
 
+def checkBoxOnChange():
+    st.experimental_rerun()
 
-# Hiển thị phần "Context" trong cột thứ hai với CSS lớp "section"
-with col2:
-    st.markdown('<div class="section"><h3>Context</h3></div>', unsafe_allow_html=True)
-    checkBox = st.checkbox(label="Give Context", value=st.session_state.checkbox, help="Please do not enter any text in this box if you do not have a context. We will automatically search to find a suitable context for you.", label_visibility="visible")
+# Hiển thị phần "Context" với CSS lớp "section"
+# with col2:
+st.markdown('<div class="section"><h3>Context</h3></div>', unsafe_allow_html=True)
+checkBox = st.checkbox(label="Give Context", value=st.session_state.checkbox, help="We will automatically search to find a suitable context for you.", label_visibility="visible", on_change=checkBoxOnChange)
 
-    if checkBox:
-        context = st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200)
-        st.session_state.context = context
-        st.session_state.question = question
-    else:
-        st.session_state.context = ""
-        st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200, disabled=True,key="context_user")
-        st.session_state.question = question
+if checkBox:
+    context = st.text_area("Context", value=st.session_state.context, placeholder="Give your context here...", height=200)
+    st.session_state.context = context
+    st.session_state.question = question
+else:
+    st.session_state.question = question
+    st.session_state.answer = ""
 
 st.markdown('<div class="center-button">', unsafe_allow_html=True)
 
 if st.button('Submit'): 
-    document = ""
-    paragraph = ""
-    
-    st.session_state.question = question
-    st.session_state.checkbox = checkBox
-    st.session_state.context = context
-    
-    if context == "":
+    if checkBox:
+        result = qa_pipeline({'question': question, 'context': context}) 
+        st.text_area("Answer", value=result['answer'], height=80)
+    else:
+#        # test
+#        document = ""
+#        paragraph = ""
+#        paragraph = document = context = "Paris (phát âm tiếng Pháp: ​[paʁi] ⓘ) là thủ đô và là thành phố đông dân nhất nước Pháp, cũng là một trong ba thành phố phát triển kinh tế nhanh nhất thế giới cùng Luân Đôn và New York và là một trung tâm hành chính của vùng Île-de-France với dân số ước tính là 2.165.423 người tính đến năm 2019, trên diện tích hơn 105,4 km2 (40,7 dặm vuông Anh)."
+
         results = gg.get_google_results(question)
         documents = [result['snippet'] for result in results]
         most_similar_document = gg.find_most_similar_documents(question, documents)
         document = most_similar_document
         paragraph = gg.the_best_paragraph(question, most_similar_document)
         context = document
-    else:
-        document = context
-        paragraph = context
 
-    st.session_state.context = context
-    if checkBox:
-        context_user = context
-    
-    result = qa_pipeline({'question': question, 'context': document})
-    answer = result['answer']
-    # Normalize the answer
-    answer = modify_answer(answer)
-    
-    st.text_area("Answer", value=answer, height=80)
+        result = qa_pipeline({'question': question, 'context': document})
+        answer = result['answer']
+        # Normalize the answer
+        answer = modify_answer(answer)
+        st.session_state.question = question
+        st.session_state.context = context
+        paragraph = modify_context(paragraph)
+        st.text_area("Founded Context:", value=paragraph, height=150)
+        st.text_area("Answer", value=answer, height=80)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
     
